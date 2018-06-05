@@ -12,7 +12,7 @@ from RL_brain import DeepQNetwork
 def playgame():
     step = 0
     color = "Black"
-    for episode in range(300):
+    for episode in range(500):
         # initial observation
         observation = env.reset()
 
@@ -26,20 +26,23 @@ def playgame():
             # RL take action and get next observation and reward
             observation_, reward, done, ncolor , error = env.step(action , color)
             
-            color = ncolor
+            if(color != ncolor):
+                color = ncolor
 
-            RL.store_transition(observation, action, reward, observation_)
+                RL.store_transition(observation, action, reward, observation_)
 
-            if (step > 200) and (step % 5 == 0):
-                RL.learn()
+                if (step > 200) and (step % 5 == 0):
+                    RL.learn()
 
             # swap observation
-            observation = observation_
+                observation = observation_
+                
+                step += 1
 
             # break while loop when end of this episode
             if done:
                 break
-            step += 1
+            
 
     # end of game
     print('game over')

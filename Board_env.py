@@ -33,6 +33,8 @@ class Board(tk.Tk, object):
         self.counter = 0  #if the game is draw 
         self.n_actions = SIZE*SIZE  #number of the action you can choose
         self.n_features = SIZE*SIZE #number of the feature
+        self.blackwin = 1
+        self.whitewin = 1
 
     def newgame(self):
         
@@ -69,7 +71,7 @@ class Board(tk.Tk, object):
         done = False
         error = False
         
-        print(location , color, self.GAMEBOARD[X][Y])
+        #print(location , color, self.GAMEBOARD[X][Y])
         
         if(self.GAMEBOARD[X][Y]!=0):
             error = True
@@ -94,7 +96,7 @@ class Board(tk.Tk, object):
         winner = 0;
         GAMEBOARD = self.GAMEBOARD
         
-        print(GAMEBOARD)
+        #print(GAMEBOARD)
         #右方向
         for i in range(0,SIZE-WINNUM+1):
             for j in range (0,SIZE):
@@ -135,9 +137,13 @@ class Board(tk.Tk, object):
             reward = 0
             done = True
         if (winner == 1):
+            print("Black Win(+)",self.blackwin / (self.whitewin+self.blackwin));
+            self.blackwin = self.blackwin +1
             reward = 10
             done = True
         elif(winner == 2):
+            print("White Win(-)",self.whitewin / (self.whitewin+self.blackwin));
+            self.whitewin = self.whitewin +1
             reward = -10
             done = True
         
