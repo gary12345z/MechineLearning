@@ -15,7 +15,6 @@ import tensorflow as tf
 np.random.seed(1)
 tf.set_random_seed(1)
 
-
 # Deep Q Network off-policy
 class DeepQNetwork:
     def __init__(
@@ -82,9 +81,15 @@ class DeepQNetwork:
 
             # second layer. collections is used later when assign to target net
             with tf.variable_scope('l2'):
-                w2 = tf.get_variable('w2', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names)
-                b2 = tf.get_variable('b2', [1, self.n_actions], initializer=b_initializer, collections=c_names)
-                self.q_eval = tf.matmul(l1, w2) + b2
+                w2 = tf.get_variable('w2', [n_l1, n_l1], initializer=w_initializer, collections=c_names)
+                b2 = tf.get_variable('b2', [1, n_l1], initializer=b_initializer, collections=c_names)
+                l2 = tf.nn.relu(tf.matmul(l1, w2) + b2)
+                
+            with tf.variable_scope('l3'):
+                w3 = tf.get_variable('w3', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names)
+                b3 = tf.get_variable('b3', [1, self.n_actions], initializer=b_initializer, collections=c_names)
+                self.q_eval = tf.matmul(l2, w3) + b3
+                
 
         with tf.variable_scope('loss'):
             self.loss = tf.reduce_mean(tf.squared_difference(self.q_target, self.q_eval))
@@ -105,9 +110,14 @@ class DeepQNetwork:
 
             # second layer. collections is used later when assign to target net
             with tf.variable_scope('l2'):
-                w2 = tf.get_variable('w2', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names)
-                b2 = tf.get_variable('b2', [1, self.n_actions], initializer=b_initializer, collections=c_names)
-                self.q_next = tf.matmul(l1, w2) + b2
+                w2 = tf.get_variable('w2', [n_l1, n_l1], initializer=w_initializer, collections=c_names)
+                b2 = tf.get_variable('b2', [1, n_l1], initializer=b_initializer, collections=c_names)
+                l2 = tf.nn.relu(tf.matmul(l1, w2) + b2)
+                
+            with tf.variable_scope('l3'):
+                w3 = tf.get_variable('w3', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names)
+                b3 = tf.get_variable('b3', [1, self.n_actions], initializer=b_initializer, collections=c_names)
+                self.q_next = tf.matmul(l2, w3) + b3
 
     def store_transition(self, s, a, r, s_):
         if not hasattr(self, 'memory_counter'):
@@ -134,6 +144,19 @@ class DeepQNetwork:
         else:
             action = np.random.randint(0, self.n_actions)
         return action
+    
+    def _choose_action(self, observation, nochoice):
+        # without epsilon
+        
+        observation=observation[np.newaxis, : ]
+        
+        if(nochoice):
+            action = np.random.randint(0, self.n_actions)
+        else:
+            actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})
+            action = np.argmax(actions_value)
+        return action
+
 
     def learn(self):
         # check to replace target parameters

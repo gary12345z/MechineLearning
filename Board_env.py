@@ -18,8 +18,8 @@ UNIT = 40   # pixels
 BASE = int(UNIT/2)
 SIZE = 3  # grid height
 WINNUM = 3
+WINREWARD = SIZE*SIZE*3
 
-strtonum = {'Black':1,'White':2}
 nextcolor = {'Black':'White','White':'Black'}
 
 class Board(tk.Tk, object):
@@ -33,8 +33,6 @@ class Board(tk.Tk, object):
         self.counter = 0  #if the game is draw 
         self.n_actions = SIZE*SIZE  #number of the action you can choose
         self.n_features = SIZE*SIZE #number of the feature
-        self.blackwin = 1
-        self.whitewin = 1
 
     def newgame(self):
         
@@ -43,21 +41,14 @@ class Board(tk.Tk, object):
                            height=SIZE * UNIT,
                            width=SIZE * UNIT)
 
-        # draw line
-        for i in range(0, SIZE * UNIT, UNIT):
-            x0, y0, x1, y1 = i, 0, i, SIZE * UNIT
-            self.canvas.create_line(x0, y0, x1, y1)
-            x0, y0, x1, y1 = 0, i, SIZE * UNIT, i
-            self.canvas.create_line(x0, y0, x1, y1)
-
         # pack all
         self.canvas.pack()
-
+    
     def reset(self):
         self.update()
         time.sleep(0.5)
-        #self.canvas.delete(self.black)
-        #self.canvas.delete(self.white)
+        for item in self.canvas.find_all():
+            self.canvas.delete(item)
         self.GAMEBOARD = np.zeros((SIZE,SIZE))
         self.counter = 0
         return self.GAMEBOARD.flatten()
@@ -66,7 +57,7 @@ class Board(tk.Tk, object):
         
         X = location % SIZE
         Y = int(location / SIZE)
-        s_ = self.GAMEBOARD
+        s_ = self.GAMEBOARD.flatten()
         reward = 0
         done = False
         error = False
@@ -77,7 +68,8 @@ class Board(tk.Tk, object):
             error = True
             return s_, reward, done , color , error
         
-        self.GAMEBOARD[X][Y]=strtonum[color];
+        self.GAMEBOARD[X][Y] = 1
+        
         self.counter = self.counter+1
         
         if (color=='Black'):
@@ -137,16 +129,10 @@ class Board(tk.Tk, object):
             reward = 0
             done = True
         if (winner == 1):
-            print("Black Win(+)",self.blackwin / (self.whitewin+self.blackwin));
-            self.blackwin = self.blackwin +1
-            reward = 10
+            print(color," Win");
+            reward = WINREWARD
             done = True
-        elif(winner == 2):
-            print("White Win(-)",self.whitewin / (self.whitewin+self.blackwin));
-            self.whitewin = self.whitewin +1
-            reward = -10
-            done = True
-        
+        self.GAMEBOARD = self.GAMEBOARD * -1;
         return s_, reward, done , nextcolor[color] ,error
 
 
@@ -154,6 +140,8 @@ def update():
     color = "Black"
     while True:
         s_, reward, done , ncolor , error = board.step(int(np.random.uniform()*SIZE*SIZE) , color)
+        if(not error):
+            print(s_, reward, done , ncolor , error)
         color = ncolor
         if(done):
             break
