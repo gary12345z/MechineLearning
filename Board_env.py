@@ -18,7 +18,7 @@ UNIT = 40   # pixels
 BASE = int(UNIT/2)
 SIZE = 3  # grid height
 WINNUM = 3
-WINREWARD = SIZE*SIZE*3
+WINREWARD = 1
 
 nextcolor = {'Black':'White','White':'Black'}
 
@@ -33,9 +33,9 @@ class Board(tk.Tk, object):
         self.counter = 0  #if the game is draw 
         self.n_actions = SIZE*SIZE  #number of the action you can choose
         self.n_features = SIZE*SIZE #number of the feature
+        self.SIZE = SIZE
 
-    def newgame(self):
-        
+    def newgame(self):  
         # background
         self.canvas = tk.Canvas(self, bg='white',
                            height=SIZE * UNIT,
@@ -55,14 +55,14 @@ class Board(tk.Tk, object):
 
     def step(self, location , color):
         
-        X = location % SIZE
-        Y = int(location / SIZE)
+        X = int(location / SIZE)
+        Y = location % SIZE
         s_ = self.GAMEBOARD.flatten()
         reward = 0
         done = False
         error = False
         
-        #print(location , color, self.GAMEBOARD[X][Y])
+        print(color,"Goto: (",X,",",Y,")")
         
         if(self.GAMEBOARD[X][Y]!=0):
             error = True

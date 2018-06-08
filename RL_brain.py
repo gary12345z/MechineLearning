@@ -26,7 +26,7 @@ class DeepQNetwork:
             e_greedy=0.9,
             replace_target_iter=300,
             memory_size=500,
-            batch_size=32,
+            batch_size=320,
             e_greedy_increment=None,
             output_graph=False,
     ):
@@ -70,8 +70,8 @@ class DeepQNetwork:
         with tf.variable_scope('eval_net'):
             # c_names(collections_names) are the collections to store variables
             c_names, n_l1, w_initializer, b_initializer = \
-                ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], 12, \
-                tf.random_normal_initializer(0., 0.3), tf.constant_initializer(0.1)  # config of layers
+                ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], self.n_features*10, \
+                tf.constant_initializer(0), tf.constant_initializer(0)  # config of layers
 
             # first layer. collections is used later when assign to target net
             with tf.variable_scope('l1'):
@@ -86,9 +86,19 @@ class DeepQNetwork:
                 l2 = tf.nn.relu(tf.matmul(l1, w2) + b2)
                 
             with tf.variable_scope('l3'):
-                w3 = tf.get_variable('w3', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names)
-                b3 = tf.get_variable('b3', [1, self.n_actions], initializer=b_initializer, collections=c_names)
-                self.q_eval = tf.matmul(l2, w3) + b3
+                w3 = tf.get_variable('w3', [n_l1, n_l1], initializer=w_initializer, collections=c_names)
+                b3 = tf.get_variable('b3', [1, n_l1], initializer=b_initializer, collections=c_names)
+                l3 = tf.nn.relu(tf.matmul(l2, w3) + b3)
+                
+            with tf.variable_scope('l4'):
+                w4 = tf.get_variable('w4', [n_l1, n_l1], initializer=w_initializer, collections=c_names)
+                b4 = tf.get_variable('b4', [1, n_l1], initializer=b_initializer, collections=c_names)
+                l4 = tf.nn.relu(tf.matmul(l3, w4) + b4)
+                
+            with tf.variable_scope('l5'):
+                w5 = tf.get_variable('w5', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names)
+                b5 = tf.get_variable('b5', [1, self.n_actions], initializer=b_initializer, collections=c_names)
+                self.q_eval = tf.matmul(l4, w5) + b5
                 
 
         with tf.variable_scope('loss'):
@@ -115,9 +125,19 @@ class DeepQNetwork:
                 l2 = tf.nn.relu(tf.matmul(l1, w2) + b2)
                 
             with tf.variable_scope('l3'):
-                w3 = tf.get_variable('w3', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names)
-                b3 = tf.get_variable('b3', [1, self.n_actions], initializer=b_initializer, collections=c_names)
-                self.q_next = tf.matmul(l2, w3) + b3
+                w3 = tf.get_variable('w3', [n_l1, n_l1], initializer=w_initializer, collections=c_names)
+                b3 = tf.get_variable('b3', [1, n_l1], initializer=b_initializer, collections=c_names)
+                l3 = tf.nn.relu(tf.matmul(l2, w3) + b3)
+                
+            with tf.variable_scope('l4'):
+                w4 = tf.get_variable('w4', [n_l1, n_l1], initializer=w_initializer, collections=c_names)
+                b4 = tf.get_variable('b4', [1, n_l1], initializer=b_initializer, collections=c_names)
+                l4 = tf.nn.relu(tf.matmul(l3, w4) + b4)
+                
+            with tf.variable_scope('l5'):
+                w5 = tf.get_variable('w5', [n_l1, self.n_actions], initializer=w_initializer, collections=c_names)
+                b5 = tf.get_variable('b5', [1, self.n_actions], initializer=b_initializer, collections=c_names)
+                self.q_next = tf.matmul(l4, w5) + b5
 
     def store_transition(self, s, a, r, s_):
         if not hasattr(self, 'memory_counter'):
@@ -131,30 +151,44 @@ class DeepQNetwork:
         self.memory[index, :] = transition
 
         self.memory_counter += 1
+        
+    def changereward(self, r):
+        # replace the old memory with new memory
+        index = (self.memory_counter+self.memory_size-2) % self.memory_size
+        self.memory[index][self.n_features+1] = r
+        print(self.memory[index])
 
     def choose_action(self, observation):
         # to have batch dimension when feed into tf placeholder
         #observation = observation[np.newaxis, :]
-        
         observation=observation[np.newaxis, : ]
         if np.random.uniform() < self.epsilon:
             # forward feed the observation and get q value for every actions
             actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})
+            print(actions_value)
             action = np.argmax(actions_value)
+            if(observation[0][action] != 0):
+                print("Wrong place")
+            else:
+                print("Correct place")
+            while(observation[0][action] != 0):
+                action = np.random.randint(0, self.n_actions)
         else:
             action = np.random.randint(0, self.n_actions)
         return action
     
-    def _choose_action(self, observation, nochoice):
+    def choose_action_(self, observation):
         # without epsilon
-        
         observation=observation[np.newaxis, : ]
-        
-        if(nochoice):
-            action = np.random.randint(0, self.n_actions)
+        actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})
+        print(actions_value)
+        action = np.argmax(actions_value)
+        if(observation[0][action] != 0):
+            print("Wrong place")
         else:
-            actions_value = self.sess.run(self.q_eval, feed_dict={self.s: observation})
-            action = np.argmax(actions_value)
+            print("Correct place")
+        while(observation[0][action] != 0):
+            action = np.random.randint(0, self.n_actions)
         return action
 
 
@@ -180,12 +214,13 @@ class DeepQNetwork:
 
         # change q_target w.r.t q_eval's action
         q_target = q_eval.copy()
-
+        
         batch_index = np.arange(self.batch_size, dtype=np.int32)
         eval_act_index = batch_memory[:, self.n_features].astype(int)
         reward = batch_memory[:, self.n_features + 1]
 
         q_target[batch_index, eval_act_index] = reward + self.gamma * np.max(q_next, axis=1)
+        print("q_target=",q_target)
 
         """
         For example in this batch I have 2 samples and 3 actions:

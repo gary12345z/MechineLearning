@@ -12,11 +12,11 @@ from RL_brain import DeepQNetwork
 
 def playgame():
     step = 0
-    
-    for episode in range(3000):
+    color = "Black"
+    for episode in range(50):
         # initial observation
         observation = env.reset()
-        color = "Black"
+        
         print("Game ",episode," Start~~~")
         
         while True:
@@ -24,23 +24,30 @@ def playgame():
             #env.render()
 
             # RL choose action based on observation
-            action = RL.choose_action(observation)
+            if(color == 'Black'):
+                action = RL.choose_action_(observation)
+            else:
+                while(observation[action]!=0):
+                    action = np.random.randint(0, 3*3)
 
             # RL take action and get next observation and reward
-            observation_, reward, done, ncolor , error = env.step(action , color)
+            observation, observation_, reward, done, ncolor , error = env.step(action , color)
             
             if(color != ncolor):
                 color = ncolor
+                if(color == "White"):
+                    RL.store_transition(observation, action, reward, observation_)
+                
+                    if(reward>0):
+                        RL.changereward(reward*-1)
 
-                RL.store_transition(observation, action, reward, observation_)
-
-                if (step > 200) and (step % 5 == 0):
-                    RL.learn()
+                    if (step > 200) and (step % 5 == 0):
+                        RL.learn()
 
             # swap observation
-                observation = observation_*-1
+                    observation = observation_*-1
                 
-                step += 1
+                    step += 1
 
             # break while loop when end of this episode
             if done:
@@ -52,25 +59,24 @@ def playgame():
     black = 0
     white = 0
     drew = 0
-    
-    for episode in range(200):
+    color = "Black"
+    for episode in range(2):
         observation = env.reset()
-        color = "Black"
-        nochoice = False
+        
         while True:
             if(color == 'Black'):
-                action = RL._choose_action(observation,nochoice)
+                action = RL.choose_action_(observation)
             else:
-                action = int(np.random.uniform()*3*3)
-
+                while(observation[action]!=0):
+                    action = np.random.randint(0, 3*3)
             # RL take action and get next observation and reward
-            observation_, reward, done, ncolor , error = env.step(action , color)
+            observation, observation_, reward, done, ncolor , error = env.step(action , color)
             
             if(color != ncolor):
                 color = ncolor
-                nochoice = False
-            elif(color == "Black"):
-                nochoice = True
+                observation = observation_*-1
+            else:
+                print("ERROR")
 
             # break while loop when end of this episode
             if done:
@@ -85,7 +91,12 @@ def playgame():
     print("黑方勝率:",black/2,"%")
     print("白方勝率:",white/2,"%")
     print("平手:",drew/2,"%")
-    
+    observation=np.array([0,0,0,0,0,0,0,0,0])
+    RL.choose_action_(observation)
+    observation=np.array([0,0,0,0,0,0,0,0,1])
+    RL.choose_action_(observation)
+    observation=np.array([0,0,0,0,0,0,0,-1,1])
+    RL.choose_action_(observation)
     env.destroy()
 
 
@@ -94,9 +105,9 @@ if __name__ == "__main__":
     env = Board()
     
     RL = DeepQNetwork(env.n_actions, env.n_features,
-                      learning_rate=0.01,
+                      learning_rate=0.001,
                       reward_decay=0.9,
-                      e_greedy=0.9,
+                      e_greedy=0.1,
                       replace_target_iter=200,
                       memory_size=2000,
                       output_graph=True
