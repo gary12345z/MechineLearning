@@ -1,13 +1,11 @@
 from Board_env import Board
-import numpy as np  
 from DQN import DQN
-import time  
+import matplotlib.pyplot as plt
+import numpy as np 
 
 EPISODE = 1500 # Episode limitation  
 TEST = 200
 STEP = 300 # Step limitation in an episode  
-
-color_to_int={"Black" : -1 ,"White" : 1}
 
 def main():  
     # initialize OpenAI Gym env and dqn agent  
@@ -19,20 +17,25 @@ def main():
         # initialize task  
         state = env.reset()  
         color = "Black"
-        print('episode ',episode)  
+        print('Train No. ',episode)  
   
         # Train  
         for step in range(STEP):  
             #自己下一步棋  
-            action = agent.egreedy_action(state) # e-greedy action for train  
+            if(color=="Black"):
+                action = agent.egreedy_action(state) # e-greedy action for train  
+            else:
+                action = agent.random_action(state)
             #if env.env.is_valid_set_coord(action[0],action[1]):  
             next_state,reward,done,next_color,_ = env.step(action,color)
             color = next_color
             # Define reward for agent
+            if done: 
+                agent.modify_last_reward(-reward)
             agent.perceive(state,action,reward,next_state,done)  
             state = next_state * -1
             if done:  
-                print('done step ',step)  
+                print('done after ',step,"step(s)")  
                 break  
             
     white = 0
@@ -41,7 +44,7 @@ def main():
     for i in range(TEST):  
         state = env.reset()  
         color = "Black"
-        
+        print('Game ',i)  
         for step in range(STEP):  
             #env.render()
             if(color=="Black"):
@@ -60,13 +63,12 @@ def main():
                 elif(reward>0 and next_color=="White"):
                     black=black+1
                 else:
-                    drew=drew+1
-                print('done')  
-                time.sleep(3)  
+                    drew=drew+1 
                 break  
     print("黑方勝率:",black/TEST*100,"%")
     print("白方勝率:",white/TEST*100,"%")
     print("平手:",drew/TEST*100,"%")
+    
             #if ave_reward >= 990:  
             #   break  
   

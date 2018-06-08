@@ -9,7 +9,7 @@ FINAL_EPSILON = 0.01 # final value of epsilon
 REPLAY_SIZE = 10000 # 经验回放缓存大小  
 BATCH_SIZE = 200 # 小批量尺寸  
 TARGET_Q_STEP = 100 # 目标网络同步的训练次数
-LEARNING_RATE = 0.0001
+LEARNING_RATE = 0.01
   
 class DQN():  
     # DQN Agent  
@@ -27,7 +27,6 @@ class DQN():
         self.create_Q_network()  
         #创建训练方法  
         self.create_training_method()  
-  
   
         self.target_q_step = TARGET_Q_STEP  
         self.create_TargetQ_network()  
@@ -128,7 +127,7 @@ class DQN():
         Q_value = self.Q_value.eval(feed_dict = {  
             self.state_input:[state]  
             })[0]  
-  
+        #print(Q_value)
         min_v = Q_value[np.argmin(Q_value)]-1  
         valid_action = []  
         for i in range(len(Q_value)):  

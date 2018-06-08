@@ -18,7 +18,7 @@ UNIT = 40   # pixels
 BASE = int(UNIT/2)
 SIZE = 3  # grid height
 WINNUM = 3
-WINREWARD = 1
+WINREWARD = 10
 
 nextcolor = {'Black':'White','White':'Black'}
 
@@ -125,12 +125,14 @@ class Board(tk.Tk, object):
                             break
                     if(GAMEBOARD[i+k][j-k] == GAMEBOARD[i][j]):
                         winner = GAMEBOARD[i][j]
-        if (self.counter == SIZE*SIZE):
+        
+        if (self.counter == SIZE*SIZE and winner == 0):
+            print("Drew");
             reward = 0
             done = True
-        if (winner == 1):
+        elif(winner == 1):
             print(color," Win");
-            reward = WINREWARD
+            reward = WINREWARD*(SIZE*SIZE-self.counter+1)
             done = True
         self.GAMEBOARD = self.GAMEBOARD * -1;
         return s_, reward, done , nextcolor[color] ,error
