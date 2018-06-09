@@ -4,12 +4,12 @@ import random
 from collections import deque  
   
 GAMMA = 0.9 # discount factor for target Q  
-INITIAL_EPSILON = 0.1 # starting value of epsilon  
+INITIAL_EPSILON = 0.2 # starting value of epsilon  
 FINAL_EPSILON = 0.01 # final value of epsilon  
 REPLAY_SIZE = 10000 # 经验回放缓存大小  
 BATCH_SIZE = 200 # 小批量尺寸  
 TARGET_Q_STEP = 100 # 目标网络同步的训练次数
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.00005
   
 class DQN():  
     # DQN Agent  
@@ -39,31 +39,43 @@ class DQN():
     def create_Q_network(self):  
         # network weights  
         W1 = self.weight_variable([self.state_dim,self.hide_layer_inputs])  
-        b1 = self.bias_variable([self.hide_layer_inputs])  
-        W2 = self.weight_variable([self.hide_layer_inputs,self.action_dim])  
-        b2 = self.bias_variable([self.action_dim])  
+        b1 = self.bias_variable([self.hide_layer_inputs])
+        W2 = self.weight_variable([self.hide_layer_inputs,self.hide_layer_inputs])  
+        b2 = self.bias_variable([self.hide_layer_inputs])  
+        W3 = self.weight_variable([self.hide_layer_inputs,self.hide_layer_inputs])  
+        b3 = self.bias_variable([self.hide_layer_inputs])  
+        W4 = self.weight_variable([self.hide_layer_inputs,self.action_dim])  
+        b4 = self.bias_variable([self.action_dim])  
         # input layer  
         self.state_input = tf.placeholder("float",[None,self.state_dim])  
         # hidden layers  
-        h_layer = tf.nn.relu(tf.matmul(self.state_input,W1) + b1)  
+        h_layer_1 = tf.nn.relu(tf.matmul(self.state_input,W1) + b1)
+        h_layer_2 = tf.nn.relu(tf.matmul(h_layer_1,W2) + b2)  
+        h_layer_3 = tf.nn.relu(tf.matmul(h_layer_2,W3) + b3)  
         # Q Value layer  
-        self.Q_value = tf.matmul(h_layer,W2) + b2  
+        self.Q_value = tf.matmul(h_layer_3,W4) + b4 
         #保存权重  
-        self.Q_Weihgts = [W1,b1,W2,b2]  
+        self.Q_Weihgts = [W1,b1,W2,b2,W3,b3,W4,b4]  
   
     def create_TargetQ_network(self):  
         # network weights  
         W1 = self.weight_variable([self.state_dim,self.hide_layer_inputs])  
-        b1 = self.bias_variable([self.hide_layer_inputs])  
-        W2 = self.weight_variable([self.hide_layer_inputs,self.action_dim])  
-        b2 = self.bias_variable([self.action_dim])  
+        b1 = self.bias_variable([self.hide_layer_inputs])
+        W2 = self.weight_variable([self.hide_layer_inputs,self.hide_layer_inputs])  
+        b2 = self.bias_variable([self.hide_layer_inputs])  
+        W3 = self.weight_variable([self.hide_layer_inputs,self.hide_layer_inputs])  
+        b3 = self.bias_variable([self.hide_layer_inputs])  
+        W4 = self.weight_variable([self.hide_layer_inputs,self.action_dim])  
+        b4 = self.bias_variable([self.action_dim])  
         # input layer  
         #self.state_input = tf.placeholder("float",[None,self.state_dim])  
         # hidden layers  
-        h_layer = tf.nn.relu(tf.matmul(self.state_input,W1) + b1)  
+        h_layer_1 = tf.nn.relu(tf.matmul(self.state_input,W1) + b1)
+        h_layer_2 = tf.nn.relu(tf.matmul(h_layer_1,W2) + b2)  
+        h_layer_3 = tf.nn.relu(tf.matmul(h_layer_2,W3) + b3)  
         # Q Value layer  
-        self.TargetQ_value = tf.matmul(h_layer,W2) + b2  
-        self.TargetQ_Weights = [W1,b1,W2,b2]  
+        self.TargetQ_value = tf.matmul(h_layer_3,W4) + b4 
+        self.TargetQ_Weights = [W1,b1,W2,b2,W3,b3,W4,b4]
   
     def copyWeightsToTarget(self):  
         for i in range(len(self.Q_Weihgts)):  

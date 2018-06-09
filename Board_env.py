@@ -6,35 +6,39 @@ Created on Thu May 24 13:19:55 2018
 """
 
 import numpy as np
-import time
+#import time
 import sys
+'''
 if sys.version_info.major == 2:
     import Tkinter as tk
 else:
     import tkinter as tk
-
+'''
 
 UNIT = 40   # pixels
 BASE = int(UNIT/2)
 SIZE = 3  # grid height
 WINNUM = 3
-WINREWARD = 10
+WINREWARD = 1
 
 nextcolor = {'Black':'White','White':'Black'}
 
-class Board(tk.Tk, object):
+#class Board(tk.Tk, object):
+class Board(object):
     def __init__(self):
+        '''
         super(Board, self).__init__()
         self.title('Game Board')
         self.geometry('{0}x{1}'.format(SIZE * UNIT, SIZE * UNIT))
         
         self.newgame()  #clear the board
+        '''
         self.GAMEBOARD = np.zeros((SIZE,SIZE))  #board
         self.counter = 0  #if the game is draw 
         self.n_actions = SIZE*SIZE  #number of the action you can choose
         self.n_features = SIZE*SIZE #number of the feature
         self.SIZE = SIZE
-
+        '''
     def newgame(self):  
         # background
         self.canvas = tk.Canvas(self, bg='white',
@@ -43,15 +47,17 @@ class Board(tk.Tk, object):
 
         # pack all
         self.canvas.pack()
-    
+    '''
     def reset(self):
-        self.update()
-        time.sleep(0.5)
-        for item in self.canvas.find_all():
-            self.canvas.delete(item)
         self.GAMEBOARD = np.zeros((SIZE,SIZE))
         self.counter = 0
         return self.GAMEBOARD.flatten()
+        '''
+        self.update()
+        time.sleep(0.5)
+        for item in self.canvas.find_all():
+            self.canvas.delete(item)'''
+        
 
     def step(self, location , color):
         
@@ -62,7 +68,7 @@ class Board(tk.Tk, object):
         done = False
         error = False
         
-        print(color,"Goto: (",X,",",Y,")")
+        #print(color,"Goto: (",X,",",Y,")")
         
         if(self.GAMEBOARD[X][Y]!=0):
             error = True
@@ -71,7 +77,7 @@ class Board(tk.Tk, object):
         self.GAMEBOARD[X][Y] = 1
         
         self.counter = self.counter+1
-        
+        '''
         if (color=='Black'):
             self.white = self.canvas.create_oval(
                     BASE + Y*UNIT - 15, BASE + X*UNIT - 15,
@@ -81,8 +87,8 @@ class Board(tk.Tk, object):
             self.white = self.canvas.create_oval(
                     BASE + Y*UNIT - 15, BASE + X*UNIT - 15,
                     BASE + Y*UNIT + 15, BASE + X*UNIT + 15,
-                    fill='white')
-        self.update()
+                    fill='white')'''
+        #self.update()
         
         s_ = self.GAMEBOARD.flatten()
         winner = 0;
@@ -127,12 +133,13 @@ class Board(tk.Tk, object):
                         winner = GAMEBOARD[i][j]
         
         if (self.counter == SIZE*SIZE and winner == 0):
-            print("Drew");
+            print(">>Drew");
             reward = 0
             done = True
         elif(winner == 1):
-            print(color," Win");
-            reward = WINREWARD*(SIZE*SIZE-self.counter+1)
+            print(">>",color," Win");
+            #reward = WINREWARD*(SIZE*SIZE-self.counter+1)
+            reward = WINREWARD
             done = True
         self.GAMEBOARD = self.GAMEBOARD * -1;
         return s_, reward, done , nextcolor[color] ,error
